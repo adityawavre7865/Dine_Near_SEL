@@ -18,8 +18,10 @@ const app = express();
 // ✅ CORS FIX (IMPORTANT)
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://localhost:3000',
-  'https://dinenearsel-pi.vercel.app/', // 🔥 replace if different
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'https://dinenearsel-pi.vercel.app/'
 ];
 
 app.use(cors({
