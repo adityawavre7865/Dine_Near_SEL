@@ -3,46 +3,77 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
-// Route imports
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const hotelRoutes = require('./routes/hotelRoutes');
 const menuRoutes = require('./routes/menuRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-// Connect to database
+// Connect DB
 connectDB();
 
 const app = express();
 
-// Middleware
+// ✅ CORS FIX (IMPORTANT)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://dinenearsel-pi.vercel.app/', // 🔥 replace if different
+];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5175', 'http://localhost:5176'],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow mobile apps/postman
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
   credentials: true,
 }));
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'DineNear API is running 🍽️', timestamp: new Date() });
+  res.json({
+    success: true,
+    message: 'DineNear API is running',
+    timestamp: new Date(),
+  });
 });
 
-// API Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 404 handler
+// 404
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`,
+  });
 });
 
-// Global error handler
+// Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error(err.message);
+
+  if (err.message === 'CORS not allowed') {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS Error: Origin not allowed',
+    });
+  }
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error',
@@ -50,7 +81,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 DineNear Server running on http://localhost:${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
